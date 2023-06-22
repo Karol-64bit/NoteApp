@@ -12,6 +12,7 @@ const db = new sqlite3.Database('./database.db');
 // Inicjalizacja tabeli użytkowników
 db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT)');
+  db.run('CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, userId INTEGER, FOREIGN KEY(userId) REFERENCES users(id))');
 });
 
 app.use(express.json());
@@ -108,6 +109,108 @@ const authenticateToken = (req, res, next) => {
 // Endpoint chroniony JWT tokenem
 app.get('/protected', authenticateToken, (req, res) => {
   res.status(200).json({ message: 'Protected endpoint' });
+});
+
+// Endpoint pobierania notatek użytkownika
+app.get('/notes', authenticateToken, (req, res) => {
+  const { username } = req.user;
+
+  // Pobranie ID użytkownika na podstawie nazwy użytkownika
+  db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (!row) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userId = row.id;
+
+    // Pobranie notatek dla danego użytkownika
+    db.all('SELECT * FROM notes WHERE userId = ?', [userId], (err, rows) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      res.status(200).json({ notes: rows });
+    });
+  });
+});
+
+// Endpoint dodawania notatki dla użytkownika
+app.post('/notes', authenticateToken, (req, res) => {
+  const { username } = req.user;
+  const { title, content } = req.body;
+
+  // Pobranie ID użytkownika na podstawie nazwy użytkownika
+  db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (!row) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userId = row.id;
+
+    // Dodanie nowej notatki do bazy danych
+    db.run('INSERT INTO notes (title, content, userId) VALUES (?, ?, ?)', [title, content, userId], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      res.status(201).json({ message: 'Note added successfully' });
+    });
+  });
+});
+
+// Endpoint edycji notatki użytkownika
+app.put('/notes/:id', authenticateToken, (req, res) => {
+  const { username } = req.user;
+  const { id } = req.params;
+  const { title, content } = req.body;
+
+  // Pobranie ID użytkownika na podstawie nazwy użytkownika
+  db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (!row) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userId = row.id;
+
+    // Sprawdzenie, czy notatka należy do danego użytkownika
+    db.get('SELECT * FROM notes WHERE id = ? AND userId = ?', [id, userId], (err, row) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      if (!row) {
+        return res.status(404).json({ error: 'Note not found' });
+      }
+
+      // Aktualizacja notatki w bazie danych
+      db.run('UPDATE notes SET title = ?, content = ? WHERE id = ?', [title, content, id], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        res.status(200).json({ message: 'Note updated successfully' });
+      });
+    });
+  });
 });
 
 // Uruchomienie serwera
