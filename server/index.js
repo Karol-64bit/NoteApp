@@ -2,12 +2,13 @@ const express = require('express');
 const sqlite3 = require('sqlite3');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const cors = require("cors");
 
 const app = express();
 const PORT = 3000;
 
 // Konfiguracja bazy danych SQLite
-const db = new sqlite3.Database('./database.db');
+const db = new sqlite3.Database('./database.sqlite');
 
 // Inicjalizacja tabeli użytkowników
 db.serialize(() => {
@@ -16,6 +17,7 @@ db.serialize(() => {
 });
 
 app.use(express.json());
+app.use(cors());
 
 // Endpoint rejestracji użytkownika
 app.post('/register', (req, res) => {
@@ -212,6 +214,49 @@ app.put('/notes/:id', authenticateToken, (req, res) => {
     });
   });
 });
+
+// Endpoint usuwania notatki użytkownika
+app.delete('/notes/:id', authenticateToken, (req, res) => {
+  const { username } = req.user;
+  const { id } = req.params;
+
+  // Pobranie ID użytkownika na podstawie nazwy użytkownika
+  db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (!row) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userId = row.id;
+
+    // Sprawdzenie, czy notatka należy do danego użytkownika
+    db.get('SELECT * FROM notes WHERE id = ? AND userId = ?', [id, userId], (err, row) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      if (!row) {
+        return res.status(404).json({ error: 'Note not found' });
+      }
+
+      // Usunięcie notatki z bazy danych
+      db.run('DELETE FROM notes WHERE id = ?', [id], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        res.status(200).json({ message: 'Note deleted successfully' });
+      });
+    });
+  });
+});
+
 
 // Uruchomienie serwera
 app.listen(PORT, () => {
