@@ -25,12 +25,12 @@ export default function App() {
           component={HomeScreen}
         />
         <Stack.Screen
-          // options={{ headerShown: false }}
+          options={{ headerShown: false }}
           name="AddNote"
           component={AddNote}
         />
         <Stack.Screen
-          // options={{ headerShown: false }}
+          options={{ headerShown: false }}
           name="EditNote"
           component={EditNote}
         />

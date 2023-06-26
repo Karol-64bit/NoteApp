@@ -16,8 +16,6 @@ const HomeScreen = () => {
       if (value !== null) {
         setToken(value);
       }
-      console.log(value);
-      console.log(token);
     } catch (error) {
       console.log(error);
     }
@@ -53,8 +51,9 @@ const HomeScreen = () => {
     }
   };
 
-  const addNewNote = () =>{
+  const addNewNote = async () =>{
     navigation.navigate("AddNote")
+    await fetchNotes(); // Ponowne pobranie notatek po edycji notatki
   }
 
 
@@ -65,6 +64,8 @@ const HomeScreen = () => {
   useEffect(() => {
       fetchNotes();
   }, [token]);
+
+
 
 
   const deleteNote = async (noteId) => {
@@ -94,6 +95,10 @@ const HomeScreen = () => {
     navigation.navigate("LoginScreen");
   };
 
+  const editNote = (note) => {
+    navigation.navigate("EditNote",{note});
+  }
+
   return (
     <View style={styles.container}>
       <Text>{token}</Text>
@@ -101,6 +106,12 @@ const HomeScreen = () => {
         <View key={note.id} style={styles.note}>
           <Text style={styles.noteTitle}>{note.title}</Text>
           <Text style={styles.noteContent}>{note.content}</Text>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => editNote(note)}
+          >
+            <Text style={styles.buttonText}>Edit</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={() => deleteNote(note.id)}
@@ -143,6 +154,13 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: "#FF0000",
+    borderRadius: 5,
+    padding: 5,
+    alignItems: "center",
+    marginTop: 5,
+  },
+  editButton: {
+    backgroundColor: "#00FF00",
     borderRadius: 5,
     padding: 5,
     alignItems: "center",

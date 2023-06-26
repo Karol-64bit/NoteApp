@@ -7,10 +7,8 @@ const cors = require("cors");
 const app = express();
 const PORT = 3000;
 
-// Konfiguracja bazy danych SQLite
 const db = new sqlite3.Database('./database.sqlite');
 
-// Inicjalizacja tabeli użytkowników
 db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT)');
   db.run('CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, userId INTEGER, FOREIGN KEY(userId) REFERENCES users(id))');
@@ -19,11 +17,10 @@ db.serialize(() => {
 app.use(express.json());
 app.use(cors());
 
-// Endpoint rejestracji użytkownika
+// Endpoint register
 app.post('/register', (req, res) => {
   const { username, password } = req.body;
 
-  // Sprawdzenie, czy użytkownik o podanej nazwie nie istnieje już w bazie danych
   db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error(err);
@@ -34,14 +31,12 @@ app.post('/register', (req, res) => {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    // Haszowanie hasła przed zapisem do bazy danych
     bcrypt.hash(password, 10, (err, hashedPassword) => {
       if (err) {
         console.error(err);
         return res.status(500).json({ error: 'Internal Server Error' });
       }
 
-      // Zapisanie nowego użytkownika do bazy danych
       db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
         if (err) {
           console.error(err);
@@ -54,11 +49,10 @@ app.post('/register', (req, res) => {
   });
 });
 
-// Endpoint logowania użytkownika
+// Endpoint login
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  // Pobranie użytkownika o podanej nazwie z bazy danych
   db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error(err);
@@ -69,7 +63,6 @@ app.post('/login', (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Porównanie hasła wprowadzonego przez użytkownika z hasłem w bazie danych
     bcrypt.compare(password, row.password, (err, result) => {
       if (err) {
         console.error(err);
@@ -80,7 +73,6 @@ app.post('/login', (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      // Generowanie JWT tokena
       const token = jwt.sign({ username: row.username }, 'secret_key');
 
       res.status(200).json({ token });
@@ -88,7 +80,7 @@ app.post('/login', (req, res) => {
   });
 });
 
-// Middleware do weryfikacji JWT tokena
+// Middleware JWT token
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -108,16 +100,11 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Endpoint chroniony JWT tokenem
-app.get('/protected', authenticateToken, (req, res) => {
-  res.status(200).json({ message: 'Protected endpoint' });
-});
 
-// Endpoint pobierania notatek użytkownika
+// Endpoint get notes
 app.get('/notes', authenticateToken, (req, res) => {
   const { username } = req.user;
 
-  // Pobranie ID użytkownika na podstawie nazwy użytkownika
   db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error(err);
@@ -130,7 +117,6 @@ app.get('/notes', authenticateToken, (req, res) => {
 
     const userId = row.id;
 
-    // Pobranie notatek dla danego użytkownika
     db.all('SELECT * FROM notes WHERE userId = ?', [userId], (err, rows) => {
       if (err) {
         console.error(err);
@@ -142,12 +128,11 @@ app.get('/notes', authenticateToken, (req, res) => {
   });
 });
 
-// Endpoint dodawania notatki dla użytkownika
+// Endpoint post note
 app.post('/notes', authenticateToken, (req, res) => {
   const { username } = req.user;
   const { title, content } = req.body;
 
-  // Pobranie ID użytkownika na podstawie nazwy użytkownika
   db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error(err);
@@ -160,7 +145,7 @@ app.post('/notes', authenticateToken, (req, res) => {
 
     const userId = row.id;
 
-    // Dodanie nowej notatki do bazy danych
+
     db.run('INSERT INTO notes (title, content, userId) VALUES (?, ?, ?)', [title, content, userId], (err) => {
       if (err) {
         console.error(err);
@@ -172,13 +157,12 @@ app.post('/notes', authenticateToken, (req, res) => {
   });
 });
 
-// Endpoint edycji notatki użytkownika
+// Endpoint edit note
 app.put('/notes/:id', authenticateToken, (req, res) => {
   const { username } = req.user;
   const { id } = req.params;
   const { title, content } = req.body;
 
-  // Pobranie ID użytkownika na podstawie nazwy użytkownika
   db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error(err);
@@ -191,7 +175,6 @@ app.put('/notes/:id', authenticateToken, (req, res) => {
 
     const userId = row.id;
 
-    // Sprawdzenie, czy notatka należy do danego użytkownika
     db.get('SELECT * FROM notes WHERE id = ? AND userId = ?', [id, userId], (err, row) => {
       if (err) {
         console.error(err);
@@ -202,7 +185,6 @@ app.put('/notes/:id', authenticateToken, (req, res) => {
         return res.status(404).json({ error: 'Note not found' });
       }
 
-      // Aktualizacja notatki w bazie danych
       db.run('UPDATE notes SET title = ?, content = ? WHERE id = ?', [title, content, id], (err) => {
         if (err) {
           console.error(err);
@@ -215,12 +197,11 @@ app.put('/notes/:id', authenticateToken, (req, res) => {
   });
 });
 
-// Endpoint usuwania notatki użytkownika
+// Endpoint delete note
 app.delete('/notes/:id', authenticateToken, (req, res) => {
   const { username } = req.user;
   const { id } = req.params;
 
-  // Pobranie ID użytkownika na podstawie nazwy użytkownika
   db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error(err);
@@ -233,7 +214,6 @@ app.delete('/notes/:id', authenticateToken, (req, res) => {
 
     const userId = row.id;
 
-    // Sprawdzenie, czy notatka należy do danego użytkownika
     db.get('SELECT * FROM notes WHERE id = ? AND userId = ?', [id, userId], (err, row) => {
       if (err) {
         console.error(err);
@@ -244,7 +224,6 @@ app.delete('/notes/:id', authenticateToken, (req, res) => {
         return res.status(404).json({ error: 'Note not found' });
       }
 
-      // Usunięcie notatki z bazy danych
       db.run('DELETE FROM notes WHERE id = ?', [id], (err) => {
         if (err) {
           console.error(err);
@@ -258,7 +237,7 @@ app.delete('/notes/:id', authenticateToken, (req, res) => {
 });
 
 
-// Uruchomienie serwera
+// Run serwer
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
