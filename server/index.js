@@ -17,6 +17,27 @@ db.serialize(() => {
 app.use(express.json());
 app.use(cors());
 
+
+// Middleware JWT token
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  jwt.verify(token, 'secret_key', (err, user) => {
+    if (err) {
+      console.error(err);
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    req.user = user;
+    next();
+  });
+};
+
 // Endpoint register
 app.post('/register', (req, res) => {
   const { username, password } = req.body;
@@ -79,27 +100,6 @@ app.post('/login', (req, res) => {
     });
   });
 });
-
-// Middleware JWT token
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token == null) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  jwt.verify(token, 'secret_key', (err, user) => {
-    if (err) {
-      console.error(err);
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    req.user = user;
-    next();
-  });
-};
-
 
 // Endpoint get notes
 app.get('/notes', authenticateToken, (req, res) => {

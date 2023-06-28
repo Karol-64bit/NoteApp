@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation();
   
@@ -24,7 +24,7 @@ const LoginScreen = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ username: name, password }),
       });
 
       if (response.ok) {
@@ -41,12 +41,12 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://localhost:3000/login", {
+      const response = await fetch("http://127.0.0.1:3000/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ username: name, password }),
       });
 
       if (response.ok) {
@@ -78,12 +78,13 @@ const LoginScreen = () => {
   }, []);
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
+    <View style={styles.container}>
+    {/* <KeyboardAvoidingView style={styles.container} behavior="padding"> */}
       <View style={styles.inputContainer}>
         <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text)}
+          placeholder="Username"
+          value={name}
+          onChangeText={(text) => setName(text)}
           style={styles.input}
         />
         <TextInput
@@ -106,7 +107,8 @@ const LoginScreen = () => {
           <Text style={styles.buttonTextPassword}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
+    // </KeyboardAvoidingView>
   );
 };
 
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonTextPassword: {
-    color: "0782F9",
+    color: "#0782F9",
     fontWeight: "700",
     fontSize: 16,
   },

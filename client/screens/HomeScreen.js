@@ -91,7 +91,7 @@ const HomeScreen = () => {
 
 
   const logout = async () => {
-    removeToken;
+    removeToken();
     navigation.navigate("LoginScreen");
   };
 
@@ -101,27 +101,29 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text>{token}</Text>
+      <Text style={styles.heading}>Your Notes</Text>
       {notes.map((note) => (
         <View key={note.id} style={styles.note}>
           <Text style={styles.noteTitle}>{note.title}</Text>
           <Text style={styles.noteContent}>{note.content}</Text>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => editNote(note)}
-          >
-            <Text style={styles.buttonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => deleteNote(note.id)}
-          >
-            <Text style={styles.buttonText}>Delete</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => editNote(note)}
+            >
+              <Text style={styles.buttonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => deleteNote(note.id)}
+            >
+              <Text style={styles.buttonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ))}
       <TouchableOpacity style={styles.button} onPress={addNewNote}>
-        <Text style={styles.buttonText}>Add new note</Text>
+        <Text style={styles.buttonText}>Add New Note</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={logout}>
         <Text style={styles.buttonText}>Logout</Text>
@@ -130,19 +132,24 @@ const HomeScreen = () => {
   );
 };
 
-export default HomeScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
   note: {
     backgroundColor: "#F5F5F5",
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
+    width: "80%",
   },
   noteTitle: {
     fontSize: 18,
@@ -153,14 +160,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   deleteButton: {
-    backgroundColor: "#FF0000",
+    backgroundColor: "#B22222",
     borderRadius: 5,
     padding: 5,
     alignItems: "center",
     marginTop: 5,
   },
   editButton: {
-    backgroundColor: "#00FF00",
+    backgroundColor: "#808080",
     borderRadius: 5,
     padding: 5,
     alignItems: "center",
@@ -179,4 +186,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
   },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  buttonHalfWidth: {
+    backgroundColor: "#B22222",
+    width: "48%",
+    padding: 5,
+    borderRadius: 5,
+    alignItems: "center",
+  },
 });
+
+export default HomeScreen;

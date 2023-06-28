@@ -39,7 +39,7 @@ const EditNote = ({route}) => {
 
       if (response.ok) {
         console.log("Notatka zaktualizowana pomyślnie");
-        navigation.navigate("HomeScreen");
+        navigation.replace("HomeScreen");
 
       } else {
         const data = await response.json();
@@ -50,9 +50,10 @@ const EditNote = ({route}) => {
     }
   }
 
-  // {route.params.note}
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <Text style={styles.heading}>Edit Note</Text>
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Title"
@@ -64,13 +65,21 @@ const EditNote = ({route}) => {
           placeholder="Content"
           value={content}
           onChangeText={(text) => setContent(text)}
-          style={styles.input}
+          style={[styles.input, styles.contentInput]} 
+          multiline={true}
+          numberOfLines={4}
         />
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={editNote} style={styles.button}>
-          <Text style={styles.buttonTextLogin}>Edit note</Text>
+          <Text style={styles.buttonText}>Edit note</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={() => navigation.replace("HomeScreen")} style={styles.button}>
+          <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -80,45 +89,6 @@ const EditNote = ({route}) => {
 export default EditNote;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  note: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-  },
-  noteTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  noteContent: {
-    fontSize: 14,
-  },
-  deleteButton: {
-    backgroundColor: "#FF0000",
-    borderRadius: 5,
-    padding: 5,
-    alignItems: "center",
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: "#0782F9",
-    width: "60%",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 40,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 16,
-  },
   container: {
     flex: 1,
     justifyContent: "center",
@@ -134,6 +104,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 5,
   },
+  contentInput: {
+    height: 100, // Zmiana wysokości na 100
+  },
   buttonContainer: {
     width: "60%",
     justifyContent: "center",
@@ -147,25 +120,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  buttonOutline: {
-    backgroundColor: "white",
-    marginTop: 5,
-    borderColor: "#0782F9",
-    borderWidth: 2,
-  },
-  buttonTextLogin: {
+  buttonText: {
     color: "white",
     fontWeight: "700",
     fontSize: 16,
   },
-  buttonTextPassword: {
-    color: "0782F9",
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  buttonOutlineText: {
-    color: "#0782F9",
-    fontWeight: "700",
-    fontSize: 16,
+  heading: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
 });
